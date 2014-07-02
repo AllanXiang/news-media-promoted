@@ -5,14 +5,22 @@ import util
 import json
 ##from math import log10
 
-def getPoint(place):
-    point = [10,8,7,6,5,4,3,2,1,1]
-    if place < 10:
-        return point[place]
-    else:
-        return 1
-
+point = [10,8,7,6,5,4,3,2,1,1]
 stopwords = util.StopWords()
+
+def getPoint(place, downtime , now):
+    '''
+    两小时内时间权重因子为3
+    '''
+    tmp = util.sub_time(now, downtime)
+    score = 1
+    if tmp < 2.0:
+        score = 3
+    if place < 10:
+        return score*point[place]
+    else:
+        return score
+
 
 def pre_all(news_text, news_downtime, train_text, now):
     """
@@ -29,10 +37,11 @@ def pre_news(news_corpus, news_downtime, now):
     vote_time = []
     news2index = {}
     index = 0
-    for t,line in enumerate(news_corpus):
+    for i,line in enumerate(news_corpus):
         s = json.loads(line)
-        for i, doc in enumerate(s):
-            if news2index.get(doc, -1) == -1:
+        for j, doc in enumerate(s):
+            k = news2index.get(doc, -1)
+            if k == -1:
                 news2index[doc] = index;
                 index = index+1
                 
@@ -43,10 +52,10 @@ def pre_news(news_corpus, news_downtime, now):
                         to_write += word+' '
                 news_seg.append(to_write)
                 
-                vote.append(getPoint(i))
-                vote_time.append(news_downtime[t])
+                vote.append(getPoint(j, news_downtime[i], now))
+                vote_time.append(news_downtime[i])
             else:
-                vote[news2index[doc]] += getPoint(i)
+                vote[news2index[doc]] += getPoint(j, vote_time[k], now)
     print '24 hour news_len:', len(news_seg)
 
     news_scores = []
@@ -54,14 +63,13 @@ def pre_news(news_corpus, news_downtime, now):
         news_scores.append(HN_score(item, util.sub_time(now, vote_time[i])))
         
 ##    排序输出news分数
-    tmp = zip(news_seg, news_scores, vote, vote_time)
-    tmp.sort(key=lambda item: item[1], reverse=True)
-    fp = open('/home/xzy/PythonFiles/FM/log/news_scores', 'w')
-    for item in tmp:
-        sss=item[0]+'\t'+str(item[1])+'\t'+str(item[2])+'\t'+item[3]+'\n'
-        fp.write(sss.encode('utf-8'))
-    fp.write('-----------------\n\n\n')
-    fp.close()
+##    tmp = zip(news_seg, news_scores, vote, vote_time)
+##    tmp.sort(key=lambda item: item[1], reverse=True)
+##    fp = open('log/'+ now +'/news_scores', 'a')
+##    for item in tmp:
+##        sss=item[0]+'\t'+str(item[1])+'\t'+str(item[2])+'\t'+item[3]+'\n'
+##        fp.write(sss.encode('utf-8'))
+##    fp.close()
     
     return (news_seg, news_scores)
 

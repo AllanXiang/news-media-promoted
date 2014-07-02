@@ -1,8 +1,30 @@
 # -*- coding: utf-8 -*-
 from gensim import corpora, models, similarities
     
-def cos_tfidf(documents, news_scores, threshold):
+def news_cluster(documents, news_scores, threshold, now):
 
+    clusters = train(documents, news_scores, threshold)
+
+    selected = []
+    len_clusters = len(clusters)
+##    fp = open('log/'+ now +'/news_cluster', 'a')
+    for i in range(len_clusters):
+        cluster = clusters[i]
+        cluster.sort(key=lambda item: -news_scores[item])
+
+##        for item in cluster:
+##            ss = documents[item]+'\t'+str(news_scores[item])
+##            fp.write(ss.encode('utf-8'))
+##            fp.write('\n')
+        
+        selected.append(documents[cluster[0]])
+
+##        fp.write('\n')
+##    fp.close()
+    print 'selected news size:',len(selected)
+    return selected
+
+def train(documents, news_scores, threshold):
     texts = [[word for word in document.split()] for document in documents]
     dictionary = corpora.Dictionary(texts)
 
@@ -28,27 +50,31 @@ def cos_tfidf(documents, news_scores, threshold):
                 vis[j] = 1
                 cluster.append(j)
         clusters.append(cluster)
-##    clusters.sort(key=lambda item: -len(item))
 
-    selected = []
-    len_clusters = len(clusters)
-##    fp_output = open('/home/xzy/PythonFiles/FM/log/cluster', 'w')
+    return clusters
+
     
+def sound_cluster(ids, documents, news_scores, threshold, now):
+
+    clusters = train(documents, news_scores, threshold)
+    selected_id = []
+    selected_downtime = []
+    
+    len_clusters = len(clusters)
+##    fp = open('log/'+ now +'/sound_cluster', 'a')
     for i in range(len_clusters):
         cluster = clusters[i]
-        cluster.sort(key=lambda item: -news_scores[item])
-##        if len(cluster) < 2:
-##            continue
+        cluster.sort(key=lambda item: news_scores[item], reverse=True)
+
 ##        for item in cluster:
-##            fp_output.write(documents[item].encode('utf-8')+'\n')
-##        fp_output.write('\n')
+##            ss = ids[item]+'\t'+documents[item]+'\t'+news_scores[item]
+##            fp.write(ss.encode('utf-8'))
+##            fp.write('\n')
         
-        selected.append(documents[cluster[0]])
- 
-##    fp_output.close()
-    print 'cluster down'
-    print 'selected size:',len(selected)
-    return selected
-
-
-    
+        selected_id.append(ids[cluster[0]])
+        selected_downtime.append(news_scores[cluster[0]])
+        
+##        fp.write('\n')
+##    fp.close()
+    print 'selected sound size:',len(selected_id)
+    return (selected_id, selected_downtime)

@@ -15,13 +15,15 @@ def StopWords():
     fp_stopwords.close()
     return stopwords
 
-def getNow():
+def getTime():
     """
-    return now
+    return now, 12 hour before
     format: %Y-%m-%d %H:%M:%S
     """
-    now  = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
-    return  now
+    base = datetime.datetime.now()
+    now  = base.strftime('%Y-%m-%d %H:%M:%S')
+    bef12 = (base - datetime.timedelta(hours=12)).strftime('%Y-%m-%d %H:%M:%S')
+    return (now, bef12)
     
 def mkDir(folder):
     if not os.path.exists(folder):
@@ -38,18 +40,24 @@ def checktime(base, sound_time):
         sound_time += ':00'
     t1 = time.strptime(base, '%Y-%m-%d %H:%M:%S')
     t2 = time.strptime(sound_time, '%Y-%m-%d %H:%M:%S')
-    interval = (time.mktime(t1)-time.mktime(t2))/3600
+    interval = (time.mktime(t1)-time.mktime(t2))/3600.0
     if interval <= 12.0:
         return True
     else:
         return False
     
 def sub_time(time1, time2):
+    '''
+    return interval by hours
+    '''
     t1 = time.strptime(time1, '%Y-%m-%d %H:%M:%S')
     t2 = time.strptime(time2, '%Y-%m-%d %H:%M:%S')
-    interval = (time.mktime(t1)-time.mktime(t2))/3600
+    interval = (time.mktime(t1)-time.mktime(t2))/3600.0
     return interval
 
 
 def dt2str(news_time):
+    '''
+    trans sql format from date to string
+    '''
     return news_time.strftime('%Y-%m-%d %H:%M:%S')

@@ -17,41 +17,32 @@ internation_id=['s_122205', 'f_0062-0001', 'c_2']
 sports_id=['s_16', 'f_0062-0006']
 taiwan_id=['f_0062-0002', 'f_0052-0001']
 property_id=['f_0062-0009']
-##category = [('top', top_id, 1), ('inner', inner_id, 3), ('military', military_id, 4), ('entainment', entainment_id, 5), ('internation', internation_id, 6),\
-##            ('sports', sports_id, 7), ('economy', economy_id, 8), ('society', society_id, 10)]
-category = [('top', top_id, 1)]
+category = [('top', top_id, 1), ('inner', inner_id, 3), ('military', military_id, 4), ('entainment', entainment_id, 5), ('internation', internation_id, 6),\
+            ('sports', sports_id, 7), ('economy', economy_id, 8), ('society', society_id, 10)]
+##category = [('top', top_id, 1)]
 ##category = [('sports', sports_id, 7)]
-now = util.getNow()
+now, bef12 = util.getTime()
 
 def getRes(news_id, category_id, category_name):
     news_text, news_downtime = sql.getNews(news_id, now)
     
-    sound_id = []
-    sound_downtime = []
-    
-    train_id = []
-    train_text = []
-    train_downtime = []
-    
-    for id in category_id:
-        tmp_sound_id, tmp_sound_downtime = sql.getSound(id, now, isTrain=False)
-        sound_id.extend(tmp_sound_id)
-        sound_downtime.extend(tmp_sound_downtime)
-        print id, len(tmp_sound_id)
-        
-        tmp_train_id, tmp_train_text, tmp_train_downtime = sql.getSound(id, isTrain=True)
-        train_downtime.extend(tmp_train_downtime)
-        train_id.extend(tmp_train_id)
-        train_text.extend(tmp_train_text)
-
-    print 'sounds tot:', len(sound_id)
-##    最近24小时sound排序
-    tmp = zip(sound_id, sound_downtime)
-    tmp.sort(key=lambda item: item[1], reverse=True)
-    sound_id, sound_downtime = zip(*tmp)
-    
+    train_id, train_text, train_downtime = sql.getSound(category_id, now)
     news_seg, news_scores, train_seg = pre.pre_all(news_text, news_downtime, train_text, now)
-    selected = cluster.cos_tfidf(news_seg, news_scores, 0.3)
+    
+    index = -1
+    for i, item in enumerate(train_downtime):
+        if item < bef12:
+            index = i
+            break
+
+    if index == -1:
+        print '12hour find error'
+    print 'train len:', len(train_id)
+    print 'sound len:', index
+    
+    selected = cluster.news_cluster(news_seg, news_scores, 0.2, now)
+    sound_id, sound_downtime = cluster.sound_cluster(train_id[:index], train_seg[:index], train_downtime[:index], 0.2, now)
+    
     res = promote.start(selected, sound_id, sound_downtime, train_id, train_seg, train_downtime, now, category_name)
     
     return res
@@ -63,13 +54,12 @@ def run():
         category_name, category_id, news_id = item
         print category_name, category_id, news_id
         num, res = getRes(news_id, category_id, category_name)
-##        getRes(news_id, category_id, category_name)
 
-##        if sql.insPromoted(news_id, res, num):
-##            print 'sql ok'
-##        else:
-##            print 'sql error'
-##        print '------------------------------------\n'
+        if sql.insPromoted(news_id, res, num):
+            print 'sql ok'
+        else:
+            print 'sql error'
+        print '------------------------------------\n'
         
 if __name__ == '__main__':
     run()
