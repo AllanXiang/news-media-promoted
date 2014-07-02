@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
-
 import jieba
 import util
 import json
-##from math import log10
 
 point = [10,8,7,6,5,4,3,2,1,1]
 stopwords = util.StopWords()
