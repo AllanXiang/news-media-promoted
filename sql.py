@@ -10,6 +10,7 @@ def getNews(news_id, downtime):
     cur = conn.cursor()
     sql = "select contents,downloadtime from news where downloadtime >= '%s'-interval 24 hour and categoryid = '%d'" % (downtime, int(news_id))
 ##    print sql
+    
     news = []
     news_downtime = []
     try:
