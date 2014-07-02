@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 import datetime
 import time
-import sys,os
-#sys.path.append('/home/xzy/PythonFiles/FM/')
+import os
 
 def StopWords():
     """
