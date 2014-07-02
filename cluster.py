@@ -18,7 +18,6 @@ def news_cluster(documents, news_scores, threshold, now):
 ##            fp.write('\n')
         
         selected.append(documents[cluster[0]])
-
 ##        fp.write('\n')
 ##    fp.close()
     print 'selected news size:',len(selected)
