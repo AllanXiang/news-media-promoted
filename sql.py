@@ -23,14 +23,14 @@ def getNews(news_id, downtime):
             conn.close()
     return (news, news_downtime)
 
-def getSound(category_id, downtime):
+def getSound(category_id, downtime1, downtime2):
     conn = MySQLdb.connect(host='10.141.201.62', user='root', passwd='medlab', db='media', charset='utf8')
     cur = conn.cursor()
     
-    sql = "select soundid, name, downloadtimedate from sound where downloadtimedate between '%s'-interval 72 hour and '%s' " % (downtime, downtime)
+    sql = "select soundid, name, downtime from sound where downtime between '%s' and '%s' " % (downtime1, downtime2)
 
     tmp = ' or '.join(["categoryid like '%s'" % (x+'%') for x in category_id])
-    sql += "and audiodown = '1' and (" + tmp + ") and length < '05:00' and length(length) = 5 order by downloadtimedate desc" 
+    sql += "and audiodown = '1' and (" + tmp + ") and length < '05:00' and length(length) = 5 order by downtime desc" 
 
 ##    print sql
     sounds = []

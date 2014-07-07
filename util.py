@@ -16,13 +16,14 @@ def StopWords():
 
 def getTime():
     """
-    return now, 12 hour before
+    return now, 12 hour before, 72 hour before
     format: %Y-%m-%d %H:%M:%S
     """
     base = datetime.datetime.now()
     now  = base.strftime('%Y-%m-%d %H:%M:%S')
     bef12 = (base - datetime.timedelta(hours=12)).strftime('%Y-%m-%d %H:%M:%S')
-    return (now, bef12)
+    bef72 = (base - datetime.timedelta(hours=72)).strftime('%Y-%m-%d %H:%M:%S')
+    return (now, bef12, bef72)
     
 def mkDir(folder):
     if not os.path.exists(folder):
@@ -40,7 +41,7 @@ def checktime(base, sound_time):
     t1 = time.strptime(base, '%Y-%m-%d %H:%M:%S')
     t2 = time.strptime(sound_time, '%Y-%m-%d %H:%M:%S')
     interval = (time.mktime(t1)-time.mktime(t2))/3600.0
-    if interval <= 12.0:
+    if interval <= 6.0:
         return True
     else:
         return False
