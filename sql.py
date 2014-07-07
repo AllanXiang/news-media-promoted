@@ -41,7 +41,7 @@ def getSound(category_id, downtime1, downtime2):
         for row in cur.fetchall():
             soundid.append(row[0].encode('utf-8'))
             sounds.append(row[1])
-            downloadtimedate.append(row[2].encode('utf-8'))
+            downloadtimedate.append(util.dt2str(row[2]))
 
     finally:
         if conn:
