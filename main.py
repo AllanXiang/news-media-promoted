@@ -26,7 +26,7 @@ now, bef12, bef72 = util.getTime()
 def getRes(news_id, category_id, category_name):
     news_text, news_downtime = sql.getNews(news_id, now)
     
-    train_id, train_text, train_downtime = sql.getSound(category_id, now, bef72)
+    train_id, train_text, train_downtime = sql.getSound(category_id, bef72, now)
     news_seg, news_scores, train_seg = pre.pre_all(news_text, news_downtime, train_text, now)
     
     index = -1
