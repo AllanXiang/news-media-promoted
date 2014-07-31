@@ -1,29 +1,44 @@
 # -*- coding: utf-8 -*-
 from gensim import corpora, models, similarities
     
-def news_cluster(documents, news_scores, threshold, now):
-
-    clusters = train(documents, news_scores, threshold)
+def news_cluster(news, threshold, now):
+    docs, scores = zip(*news)
+    clusters = train(docs, threshold)
 
     selected = []
     len_clusters = len(clusters)
-##    fp = open('log/'+ now +'/news_cluster', 'a')
+    # fp = open('log/'+ now +'/news_cluster', 'w')
     for i in range(len_clusters):
         cluster = clusters[i]
-        cluster.sort(key=lambda item: -news_scores[item])
+        # throw len(cluster) == 1 
+        # if len(cluster) == 1:
+        #     continue
+        cluster.sort(key=lambda item: -news[item][1])
 
-##        for item in cluster:
-##            ss = documents[item]+'\t'+str(news_scores[item])
-##            fp.write(ss.encode('utf-8'))
-##            fp.write('\n')
+        tot = 0
+        for item in cluster:
+            tot += news[item][1]
+
+            # ss = news[item][0]+'\t'+str(news[item][1])
+            # fp.write(ss.encode('utf-8'))
+            # fp.write('\n')
         
-        selected.append(documents[cluster[0]])
-##        fp.write('\n')
-##    fp.close()
+        selected.append( (news[cluster[0]][0], tot) )
+        # fp.write('\n')
+    
     print 'selected news size:',len(selected)
+    selected.sort(key=lambda item: -item[1])
+
+    # fp.write('\n\ntot\n')
+    # for item in selected:
+    #     ss = item[0]+'\t'+str(item[1])
+    #     fp.write(ss.encode('utf-8'))
+    #     fp.write('\n')
+
+    # fp.close()
     return selected
 
-def train(documents, news_scores, threshold):
+def train(documents, threshold):
     texts = [[word for word in document.split()] for document in documents]
     dictionary = corpora.Dictionary(texts)
 
@@ -53,27 +68,29 @@ def train(documents, news_scores, threshold):
     return clusters
 
     
-def sound_cluster(ids, documents, news_scores, threshold, now):
-
-    clusters = train(documents, news_scores, threshold)
-    selected_id = []
-    selected_downtime = []
+def sound_cluster(sounds, threshold, now):
+    ids, docs, scores = zip(*sounds)
+    clusters = train(docs, threshold)
+    selected = []
     
     len_clusters = len(clusters)
-##    fp = open('log/'+ now +'/sound_cluster', 'a')
+    # fp = open('log/'+ now +'/sound_cluster', 'w')
     for i in range(len_clusters):
         cluster = clusters[i]
-        cluster.sort(key=lambda item: news_scores[item], reverse=True)
+        if len(cluster) < 2:
+            continue
+        cluster.sort(key=lambda item: sounds[item][2], reverse=True)
 
-##        for item in cluster:
-##            ss = ids[item]+'\t'+documents[item]+'\t'+news_scores[item]
-##            fp.write(ss.encode('utf-8'))
-##            fp.write('\n')
+        # for item in cluster:
+        #     ss = sounds[item][0]+'\t'+sounds[item][1]+'\t'+sounds[item][2]
+        #     fp.write(ss.encode('utf-8'))
+        #     fp.write('\n')
         
-        selected_id.append(ids[cluster[0]])
-        selected_downtime.append(news_scores[cluster[0]])
+        selected.append(sounds[cluster[0]])
         
-##        fp.write('\n')
-##    fp.close()
-    print 'selected sound size:',len(selected_id)
-    return (selected_id, selected_downtime)
+        # fp.write('\n')
+    # fp.close()
+
+    selected.sort(key=lambda item: item[2], reverse=True)
+    print 'selected sound size:',len(selected)
+    return selected

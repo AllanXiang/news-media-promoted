@@ -4,28 +4,32 @@ import util
 import json
 
 threshold = 0.4
-threshold_big = 0.6
+threshold_big = 0.5
 
-def start(selected, sound_id, sound_downtime, train_id, train_seg, train_downtime, now, file_name):
-    dic, tfidf, index = train(train_seg)
-    find_id = find(selected, dic, tfidf, index, train_id, train_seg, train_downtime, now, file_name, sound_id)
+def start(news_selected, sounds_selected, sounds, now, file_name, sounds_cluster):
+    ids, docs, downtimes = zip(*sounds)
+    ids_sel, docs_sel, downtimes_sel = zip(*sounds_selected)
+    dic, tfidf, index = train(docs)
+    finds = find(news_selected, dic, tfidf, index, sounds, now, file_name, ids_sel)
 
-    num = len(find_id)
+    num = len(finds)
     print 'match size:', num
     if num < 100:
-        b =set(sound_id[:110-num])
+        b =set(sounds_cluster[:110-num])
         fp_find = open('log/'+now+'/'+file_name, 'a')
         fp_find.write('add newest sound to fulfill req\n')
-        for i, item in enumerate(sound_id[:110-num]):
-            fp_find.write(item+'\t'+sound_downtime[i]+'\n')
+        for item in sounds_cluster[:110-num]:
+            to_write = item[0]+'\t'+item[1]+'\t'+item[2]+'\n'
+            fp_find.write(to_write.encode('utf-8'))
         fp_find.close()
-        res = find_id.union(b)
+        res = finds.union(b)
         num = len(res)
         print 'tot find:', num
-        return (num, json.dumps(list(res)))
+        
     else:
-        return (num, json.dumps(list(find_id)))
-    
+        res = finds
+    res_ids, res_docs, res_downtimes = zip(*res)
+    return (num, json.dumps(res_ids))    
 
     
 def train(documents):
@@ -42,30 +46,35 @@ def train(documents):
     return (dictionary, tfidf, index)
 
 
-def find(selected, dic, tfidf, index, train_id, documents, train_downtime, now, file_name, sound_id):
+def find(selected, dic, tfidf, index, sounds, now, file_name, ids_sel):
     res = set()
     
     fp_find = open('log/'+now+'/'+file_name, 'w')
     for query in selected:
-        query_bow = dic.doc2bow(query.split())
+        query_bow = dic.doc2bow(query[0].split())
         query_tfidf = tfidf[query_bow]
         sims = index[query_tfidf]
         sort_sims = sorted(enumerate(sims), key=lambda item: -item[1])
         len_sort_sims = len(sort_sims)
+
+        
         for i in range(len_sort_sims):
             place = sort_sims[i][0]
             simi = sort_sims[i][1]
             if simi < threshold :
-                break           
-            
-            if train_id[place] in sound_id:
-                if util.checktime(now, train_downtime[place]) or simi > threshold_big:
-                    res.add(train_id[place])
-                    fp_find.write('query: '+query.encode('utf-8')+'\n')
-                    to_write = train_id[place]+'\t'+documents[place]+'\t'+str(simi)+'\t'+train_downtime[place]+'\n'
+                # fp_find.write('\n\n')
+                break     
+
+            if sounds[place][0] in ids_sel:
+                if util.checktime(now, sounds[place][2]) or simi > threshold_big:
+                    res.add(sounds[place])
+                    to_write = 'query: '+query[0]+'\tpoint: '+str(query[1])+'\n'
+                    to_write += sounds[place][0]+'\t'+sounds[place][1]+'\t'+str(simi)+'\t'+sounds[place][2]+'\n\n'
                     fp_find.write(to_write.encode('utf-8'))
-                    fp_find.write('\n')
                     break
+
+            # to_write = sounds[place][0]+'\t'+sounds[place][1]+'\t'+str(simi)+'\t'+sounds[place][2]+'\n'
+            # fp_find.write(to_write.encode('utf-8'))
                 
     fp_find.close()
     return res

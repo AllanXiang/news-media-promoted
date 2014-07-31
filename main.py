@@ -19,31 +19,33 @@ taiwan_id=['f_0062-0002', 'f_0052-0001']
 property_id=['f_0062-0009']
 category = [('top', top_id, 1), ('inner', inner_id, 3), ('military', military_id, 4), ('entainment', entainment_id, 5), ('internation', internation_id, 6),\
             ('sports', sports_id, 7), ('economy', economy_id, 8), ('society', society_id, 10)]
-##category = [('top', top_id, 1)]
+# category = [('top', top_id, 1)]
 ##category = [('sports', sports_id, 7)]
-now, bef12, bef72 = util.getTime()
+now, bef24, bef72 = util.getTime()
+# now = '2014-07-30 21:47:20'
+# bef24 = '2014-07-29 21:47:20'
+# bef72 = '2014-07-27 21:47:20'
 
-def getRes(news_id, category_id, category_name):
-    news_text, news_downtime = sql.getNews(news_id, now)
-    
-    train_id, train_text, train_downtime = sql.getSound(category_id, bef72, now)
-    news_seg, news_scores, train_seg = pre.pre_all(news_text, news_downtime, train_text, now)
+def getRes(news_category_id, category_id, category_name):
+    news_corpus = sql.getNews(news_category_id, now)
+    sounds_corpus = sql.getSound(category_id, bef72, now)
+    news, sounds = pre.pre_all(news_corpus, sounds_corpus, now)
     
     index = -1
-    for i, item in enumerate(train_downtime):
-        if item < bef12:
+    for i, item in enumerate(sounds):
+        if item[2] < bef24:
             index = i
             break
 
     if index == -1:
         print '12hour find error'
-    print 'train len:', len(train_id)
-    print 'sound len:', index
+    print '72 hour sounds len:', len(sounds)
+    print '24 hour sounds len:', index
     
-    selected = cluster.news_cluster(news_seg, news_scores, 0.2, now)
-    sound_id, sound_downtime = cluster.sound_cluster(train_id[:index], train_seg[:index], train_downtime[:index], 0.2, now)
+    news_cluster = cluster.news_cluster(news, 0.2, now)
+    sounds_cluster = cluster.sound_cluster(sounds[:index], 0.2, now)
     
-    res = promote.start(selected, sound_id, sound_downtime, train_id, train_seg, train_downtime, now, category_name)
+    res = promote.start(news_cluster, sounds[:index], sounds, now, category_name, sounds_cluster)
     
     return res
 
@@ -51,11 +53,11 @@ def run():
     print 'start time: ', now
     util.mkDir('log/'+now)
     for item in category:
-        category_name, category_id, news_id = item
-        print category_name, category_id, news_id
-        num, res = getRes(news_id, category_id, category_name)
+        category_name, category_id, news_category_id = item
+        print category_name, category_id, news_category_id
+        num, res = getRes(news_category_id, category_id, category_name)
 
-        if sql.insPromoted(news_id, res, num):
+        if sql.insPromoted(news_category_id, res, num):
             print 'sql ok'
         else:
             print 'sql error'

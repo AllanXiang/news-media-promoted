@@ -20,46 +20,46 @@ def getPoint(place, downtime , now):
         return score
 
 
-def pre_all(news_text, news_downtime, train_text, now):
+def pre_all(news_corpus, sounds_corpus, now):
     """
     pre corpus
     """
-    news_seg, news_scores = pre_news(news_text, news_downtime, now)
-    train_seg = pre_sound(train_text)
-    print 'pre done'
-    return (news_seg, news_scores, train_seg)
+    news = pre_news(news_corpus, now)
+    sounds = pre_sound(sounds_corpus)
+    # print 'pre done'
+    return (news, sounds)
 
-def pre_news(news_corpus, news_downtime, now):
+def pre_news(news_corpus, now):
     news_seg = []
     vote = []
     vote_time = []
     news2index = {}
     index = 0
-    for i,line in enumerate(news_corpus):
-        s = json.loads(line)
+    for line in news_corpus:
+        s = json.loads(line[0])
         for j, doc in enumerate(s):
             k = news2index.get(doc, -1)
             if k == -1:
                 news2index[doc] = index;
                 index = index+1
                 
-                seg_list = jieba.cut(doc.replace(' ', ''))
+                seg_list = jieba.cut(''.join(doc.split()))
                 to_write = ''
                 for word in seg_list:
                     if word.encode('utf-8') not in stopwords:
                         to_write += word+' '
                 news_seg.append(to_write)
                 
-                vote.append(getPoint(j, news_downtime[i], now))
-                vote_time.append(news_downtime[i])
+                vote.append(getPoint(j, line[1], now))
+                vote_time.append(line[1])
             else:
                 vote[news2index[doc]] += getPoint(j, vote_time[k], now)
     print '24 hour news_len:', len(news_seg)
 
-    news_scores = []
+    news = []
     for i, item in enumerate(vote):
-        news_scores.append(HN_score(item, util.sub_time(now, vote_time[i])))
-        
+        news.append(( news_seg[i], HN_score(item, util.sub_time(now, vote_time[i])) ))
+       
 ##    排序输出news分数
 ##    tmp = zip(news_seg, news_scores, vote, vote_time)
 ##    tmp.sort(key=lambda item: item[1], reverse=True)
@@ -69,20 +69,20 @@ def pre_news(news_corpus, news_downtime, now):
 ##        fp.write(sss.encode('utf-8'))
 ##    fp.close()
     
-    return (news_seg, news_scores)
+    return news
 
 def HN_score(P, T, G=1.8):
     return (P-1) / pow((T+2), G)
 ##    return log10(P) / pow((T+2), G)
 
-def pre_sound(sound_corpus):
-    sound_seg = []
-    for line in sound_corpus:
-        seg_list = jieba.cut(line.replace(' ', ''))
-        to_write = ''
+def pre_sound(sounds_corpus):
+    sounds = []
+    for line in sounds_corpus:
+        seg_list = jieba.cut(''.join(line[1].split()))
+        towrite = ''
         for word in seg_list: 
             if word.encode('utf-8') not in stopwords:
-                to_write += word+' '
-        sound_seg.append(to_write)
+                towrite += word+' '
+        sounds.append(( line[0], towrite, line[2] ))
 
-    return sound_seg
+    return sounds
