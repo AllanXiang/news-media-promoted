@@ -15,21 +15,21 @@ def start(news_selected, sounds_selected, sounds, now, file_name, sounds_cluster
     num = len(finds)
     print 'match size:', num
     if num < 100:
-        b =set(sounds_cluster[:110-num])
+
         fp_find = open('log/'+now+'/'+file_name, 'a')
         fp_find.write('add newest sound to fulfill req\n')
         for item in sounds_cluster[:110-num]:
-            to_write = item[0]+'\t'+item[1]+'\t'+item[2]+'\n'
-            fp_find.write(to_write.encode('utf-8'))
+            if item[0] not in finds:
+                to_write = item[0]+'\t'+item[1]+'\t'+item[2]+'\n'
+                fp_find.write(to_write.encode('utf-8'))
+                finds.append(item[0])
+
         fp_find.close()
-        res = finds.union(b)
-        num = len(res)
+
+        num = len(finds)
         print 'tot find:', num
         
-    else:
-        res = finds
-    res_ids, res_docs, res_downtimes = zip(*res)
-    return (num, json.dumps(res_ids))    
+    return (num, json.dumps(finds))    
 
     
 def train(documents):
@@ -47,7 +47,7 @@ def train(documents):
 
 
 def find(selected, dic, tfidf, index, sounds, now, file_name, ids_sel):
-    res = set()
+    res = []
     
     fp_find = open('log/'+now+'/'+file_name, 'w')
     for query in selected:
@@ -57,17 +57,16 @@ def find(selected, dic, tfidf, index, sounds, now, file_name, ids_sel):
         sort_sims = sorted(enumerate(sims), key=lambda item: -item[1])
         len_sort_sims = len(sort_sims)
 
-        
         for i in range(len_sort_sims):
             place = sort_sims[i][0]
             simi = sort_sims[i][1]
-            if simi < threshold :
-                # fp_find.write('\n\n')
+            if simi < threshold:
                 break     
 
             if sounds[place][0] in ids_sel:
-                if util.checktime(now, sounds[place][2]) or simi > threshold_big:
-                    res.add(sounds[place])
+                tmp = sounds[place]
+                if (util.checktime(now, tmp[2]) or simi > threshold_big) and tmp[0] not in res:
+                    res.append(tmp[0])
                     to_write = 'query: '+query[0]+'\tpoint: '+str(query[1])+'\n'
                     to_write += sounds[place][0]+'\t'+sounds[place][1]+'\t'+str(simi)+'\t'+sounds[place][2]+'\n\n'
                     fp_find.write(to_write.encode('utf-8'))
