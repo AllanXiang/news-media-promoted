@@ -56,12 +56,12 @@ def run():
         category_name, category_id, news_category_id = item
         print category_name, category_id, news_category_id
         num, res = getRes(news_category_id, category_id, category_name)
-
-        if sql.insPromoted(news_category_id, res, num):
-            print 'sql ok'
-        else:
-            print 'sql error'
-        print '------------------------------------\n'
+        if num > 0:
+            if sql.insPromoted(news_category_id, res, num):
+                print 'sql ok'
+            else:
+                print 'sql error'
+            print '------------------------------------\n'
         
 if __name__ == '__main__':
     run()
